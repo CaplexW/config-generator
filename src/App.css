@@ -2,6 +2,13 @@
 
 .logo {}
 
+.monospace-font {
+  font-family: monospace;
+}
+.space {
+  height: 1rem;
+}
+
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);
