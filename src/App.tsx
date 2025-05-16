@@ -1,10 +1,8 @@
 import './App.css'
-import Display from './components/display'
-import DES_1210 from './components/models/D-Link/DES/1210'
-import createMacRules from './utils/createMacRules'
+import DES_1228 from './components/models/D-Link/DES/1228'
 
 function App() {
-  return <DES_1210 numberOfPorts={26} />
+  return <DES_1228 numberOfPorts={26} />
 }
 
 export default App
