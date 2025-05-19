@@ -1,6 +1,6 @@
 import commonData, { type PortsInfo } from "../data/commonData";
 
-function createMacRules(ports: PortsInfo, profileId: number): ConfigBlock {
+function createMacRules(ports: PortsInfo, profileId: number, isPortRange: boolean = true): ConfigBlock {
   let numberOfRules = 0;
 
   const { broadcastMac, nodesMacList, etherTypes } = commonData;
