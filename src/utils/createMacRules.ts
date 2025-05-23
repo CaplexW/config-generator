@@ -19,32 +19,35 @@ function createMacRules(ports: PortsInfo, profileId: number, portSequence: boole
   const createSourceMacRules = (): string[][] => {
 
     const createCommonRules = (action: string): string[] => {
-      const createRule = (mac: string, port: string) => `
+      const createRule = (mac: string, port: string) => {
+        const rule = `
           config access_profile profile_id ${profileId} 
           add access_id ${numberOfRules + 1}
           ethernet source_mac ${mac} 
           port ${port} 
           ${action}
         `;
-      const commonRules = nodesMacList.map((mac) => {
-        let rule: string;
+        
+        numberOfRules++;
+        return rule ;
+      }
+      const commonRules: string[] = [];
 
-        if (portSequence) {
-          const rules:string[] = [];
+      if (portSequence) {
+        nodesMacList.forEach((mac) => {
           for (let port = 1; port < ports.special.start; port++) {
             const rule = createRule(mac, port.toString());
-            numberOfRules++;
-            rules.push(rule);
+            commonRules.push(rule);
           }
+        })
+      } else {
+        nodesMacList.forEach((mac) => {
+          const rule = createRule(mac, commonPortRange);
+          commonRules.push(rule);
+        })
+        return commonRules;
+      }
 
-          return rules.join("\n");
-        } else {
-          rule = createRule(mac, commonPortRange);
-          numberOfRules++;
-
-          return rule;
-        }
-      })
       return commonRules;
     }
     const createSpecialRules = (action: string, priority: number = 3): string[] => {
