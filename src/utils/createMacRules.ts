@@ -1,16 +1,12 @@
 import commonData, { type PortsInfo } from "../data/commonData";
+import createPortRanges from "./createPortRanges";
 
-function createMacRules(ports: PortsInfo, profileId: number, isPortRange: boolean = true): ConfigBlock {
-  let numberOfRules = 0;
-
-function createMacRules(ports: PortsInfo, profileId: number, portRange: boolean = true): ConfigBlock {
+function createMacRules(ports: PortsInfo, profileId: number, portSequence: boolean = true): ConfigBlock {
   const { broadcastMac, nodesMacList, etherTypes } = commonData;
 
   let numberOfRules = 0;
-  
-  const commonPortsRange = `${ports.common.start}-${ports.common.end}`;
-  const specialPortsRange = `${ports.special.start}-${ports.special.end}`;
-  const fullPortRange = `${ports.common.start}-${ports.special.end}`;
+
+  const { commonPortRange, specialPortRange, fullPortRange } = createPortRanges(ports);
 
   const accessProfile = `
     create access_profile 
@@ -23,20 +19,32 @@ function createMacRules(ports: PortsInfo, profileId: number, portRange: boolean 
   const createSourceMacRules = (): string[][] => {
 
     const createCommonRules = (action: string): string[] => {
-      const commonRules: string[] = [];
-
-      nodesMacList.forEach((mac) => {
-        const rule = `
+      const createRule = (mac: string, port: string) => `
           config access_profile profile_id ${profileId} 
           add access_id ${numberOfRules + 1}
           ethernet source_mac ${mac} 
-          port ${commonPortsRange} 
+          port ${port} 
           ${action}
         `;
-        commonRules.push(rule);
-        numberOfRules++;
-      })
+      const commonRules = nodesMacList.map((mac) => {
+        let rule: string;
 
+        if (portSequence) {
+          const rules:string[] = [];
+          for (let port = 1; port < ports.special.start; port++) {
+            const rule = createRule(mac, port.toString());
+            numberOfRules++;
+            rules.push(rule);
+          }
+
+          return rules.join("\n");
+        } else {
+          rule = createRule(mac, commonPortRange);
+          numberOfRules++;
+
+          return rule;
+        }
+      })
       return commonRules;
     }
     const createSpecialRules = (action: string, priority: number = 3): string[] => {
@@ -48,7 +56,7 @@ function createMacRules(ports: PortsInfo, profileId: number, portRange: boolean 
           add access_id ${numberOfRules + 1} 
           ethernet source_mac ${mac} 
           ethernet_type ${etherTypes.pppoeDiscovery} 
-          port ${specialPortsRange} 
+          port ${specialPortRange} 
           ${action} 
           priority ${priority}
         `;
@@ -60,7 +68,7 @@ function createMacRules(ports: PortsInfo, profileId: number, portRange: boolean 
           add access_id ${numberOfRules + 1} 
           ethernet source_mac ${mac} 
           ethernet_type ${etherTypes.pppoeSession} 
-          port ${specialPortsRange} 
+          port ${specialPortRange} 
           ${action} 
           priority ${priority}
           `;
@@ -157,7 +165,7 @@ function createMacRules(ports: PortsInfo, profileId: number, portRange: boolean 
   const commonSourceRules = sourceMacRules[0];
   const specialSourceRules = sourceMacRules[1];
   const destMacRules = createDestMacRules();
-  const arpRules = createARPRules('permit', commonPortsRange);
+  const arpRules = createARPRules('permit', commonPortRange);
 
   const macRules = {
     header: accessProfile,
