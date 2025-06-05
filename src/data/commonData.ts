@@ -26,22 +26,32 @@ const commonData: DataStorage = {
 
 export default commonData;
 
-type MacList = string[];
+type MacList = MAC[];
 type DataStorage = {
   broadcastMac: 'FF-FF-FF-FF-FF-F0',
   nodesMacList: MacList,
   etherTypes: EthernetTypes,
   acl: ACLData,
 };
-type EthernetTypes = {
+export type EthernetTypes = {
   arp: '0x008',
   pppoeDiscovery: '0x8863',
   pppoeSession: '0x8864',
 };
 export type PortsInfo = {
-  common: { start: number, end: number },
-  special: { start: number, end: number },
+  common: PortRange,
+  special: PortRange,
+  full: PortRange,
 }
+export type PortRange = { start: number, end: number };
+
 export type ACLData = {
   macBasedProfileId: number,
 }
+
+
+export type IP = `${number}.${number}.${number}.${number}`;
+export type MAC = `${string}-${string}-${string}-${string}-${string}-${string}`;
+
+export type ValueOf<Object> = Object[keyof Object];
+

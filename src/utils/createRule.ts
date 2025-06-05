@@ -1,20 +1,27 @@
-function createRule(
-  profileId: number,
-  ruleId: number,
-  port: string | number,
-  protocolTarget: IP | MAC,
-  action: 'deny' | 'permit' = 'deny',
-  protocolDirection: 'src' | 'dest' = 'src',
-  protocol: NetworkProtocol = 'ethernet',
-): string {
+import type { EthernetTypes, IP, MAC, ValueOf } from "../data/commonData";
+
+function createRule({
+  profileId,
+  ruleId,
+  port,
+  protocolValue,
+  etherType,
+  priority,
+  action = 'deny',
+  protocolDirection = 'src',
+  protocol = 'ethernet',
+}: RuleConfig): string {
   const rule = `
-    confing access_profile ${profileId}
-    profile_id ${ruleId}
+    config access_profile
+    profile_id ${profileId}
+    add access_id ${ruleId}
     ${protocol}
-    ${protocolDirection === 'src' ? 'source_' : 'destination_'}+${protocol}
-    ${protocolTarget}
-    ${port}
+    ${protocolDirection === 'src' ? 'source_' : 'destination_'}${protocol === "ethernet" ? 'mac' : 'ip'}
+    ${protocolValue}
+    ${etherType ? `ethernet_type ${etherType}` : ''}
+    port ${port}
     ${action}
+    ${priority ? `priority ${priority}` : ''}
   `;
 
   return rule;
@@ -28,7 +35,14 @@ export type NetworkProtocol =
   | "tcp"
   | "udp"
 
-type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
-
-type IP = `${Digit}.${Digit}.${Digit}.${Digit}`;
-type MAC = `${string}-${string}-${string}-${string}-${string}-${string}`;
+export type RuleConfig = {
+  profileId: number,
+  ruleId: number,
+  port: string | number,
+  protocolValue: IP | MAC,
+  action?: 'deny' | 'permit',
+  etherType?: ValueOf<EthernetTypes>,
+  priority?: number,
+  protocolDirection?: 'src' | 'dest',
+  protocol?: NetworkProtocol,
+};
