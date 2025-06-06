@@ -1,4 +1,5 @@
 import type { EthernetTypes, IP, MAC, PortRange, ValueOf } from "../data/commonData";
+import type { RuleBlock } from "./createMacRules";
 import type { NetworkProtocol } from "./createRule";
 import getNetworkProtocol, { isMac } from "./getNetworkProtocol";
 
@@ -22,25 +23,32 @@ const ACL = {
       ${rule.priority ? `priority ${rule.priority}` : ''}
     `;
   },
-  createRuleFromList: (list: MAC[] | IP[], rule: ACLRuleConfig, numberOfRules: number, portSequence: boolean = false) => {
+  createRuleFromList: (list: MAC[] | IP[], rule: ACLRuleConfig, numberOfRules: number, portSequence: boolean = false): RuleBlock => {
     const { portRange } = rule;
-    console.log(portRange);
+    // let numberOfRules = rule.ruleId;
     if (portRange === undefined) throw 'portRange property is not defined in createRuleFromList argument. This property could not be undefined in this function argument.';
 
     if (portSequence) {
       const result = list.flatMap((item) => {
         if (rule.ehterType && Array.isArray(rule.ehterType)) {
           const rules = rule.ehterType.flatMap((type) => {
-            const currentRule: ACLRuleConfig = {
-              ...rule,
-              ruleId: numberOfRules + 1,
-              ports: `${portRange.start}-${portRange.end}`,
-              protocol: getNetworkProtocol(item),
-              ehterType: type,
-            };
-            if (currentRule.ruleTarget) currentRule.ruleTarget.value = item;
+            const itemRules: string[] = [];
+            for (let currentPort = portRange.start; currentPort <= portRange.end; currentPort++) {
+              const currentRule: ACLRuleConfig = {
+                ...rule,
+                ruleId: numberOfRules + 1,
+                ports: currentPort,
+                protocol: getNetworkProtocol(item),
+                ehterType: type
+              };
+              if (currentRule.ruleTarget) currentRule.ruleTarget.value = item;
 
-            return ACL.createRule(currentRule);
+              console.log(currentRule)
+              itemRules.push(ACL.createRule(currentRule));
+              numberOfRules++;
+            }
+
+            return itemRules;
           })
 
           return rules;
@@ -65,7 +73,7 @@ const ACL = {
 
       return result;
     } else {
-      const result = list.map((item) => {
+      const result = list.flatMap((item) => {
         if (rule.ehterType && Array.isArray(rule.ehterType)) {
           const rules = rule.ehterType.flatMap((type) => {
             const currentRule: ACLRuleConfig = {
@@ -77,6 +85,7 @@ const ACL = {
             };
             if (currentRule.ruleTarget) currentRule.ruleTarget.value = item;
 
+            numberOfRules++;
             return ACL.createRule(currentRule);
           })
 
@@ -103,7 +112,7 @@ const ACL = {
 export type ACLRuleConfig = {
   profileId: number;
   action: 'permit' | 'deny',
-  ruleId?: number;
+  ruleId: number;
   protocol?: NetworkProtocol;
   ports?: number | string;
   portRange?: PortRange,
