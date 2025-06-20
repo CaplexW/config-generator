@@ -2,11 +2,11 @@ import type { PortsInfo } from "../../../../../../data/commonData";
 import commonData from "../../../../../../data/commonData";
 import MacSourceDestProfile from "./macBasedRules";
 
-function ACL({ ports }: { ports: PortsInfo }) {
+function ACL({ ports, portSequence }: { ports: PortsInfo, portSequence: boolean }) {
   const { acl } = commonData;
   return (
     <div className="acl">
-      <MacSourceDestProfile ports={ports} profileId={acl.macBasedProfileId} />
+      <MacSourceDestProfile ports={ports} profileId={acl.macBasedProfileId} portSequence={portSequence} />
     </div>
   )
 }

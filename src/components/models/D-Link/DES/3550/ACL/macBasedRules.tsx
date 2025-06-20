@@ -2,8 +2,8 @@ import type { PortsInfo } from "../../../../../../data/commonData";
 import createMacRules from "../../../../../../utils/createMacRules";
 import Display from "../../../../../display/display";
 
-function MacSourceDestProfile({ ports, profileId }: { ports: PortsInfo, profileId: number }) {
-  const configList = createMacRules(ports, profileId);
+function MacSourceDestProfile({ ports, profileId, portSequence }: { ports: PortsInfo, profileId: number, portSequence:boolean }) {
+  const configList = createMacRules(ports, profileId, portSequence);
 
   return <Display src={configList} />
 }

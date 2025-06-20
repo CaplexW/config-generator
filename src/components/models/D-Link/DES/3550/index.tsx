@@ -1,7 +1,8 @@
 import type { PortsInfo } from "../../../../../data/commonData";
 import ACL from "./ACL";
 
-function DES_3550({ numberOfPorts, portConfig = 'default' }: SwitchProps) {
+function DES_3550({ portConfig = 'default' }: SwitchProps) {
+  const numberOfPorts = 50;
   const generateDefaultPortConfig = (): PortsInfo => {
     const portsConfig = {
       common: { start: 1, end: numberOfPorts - 2 },
@@ -13,7 +14,7 @@ function DES_3550({ numberOfPorts, portConfig = 'default' }: SwitchProps) {
 
   return (
     <div className="switch">
-      <ACL ports={portConfig === 'default' ? generateDefaultPortConfig() : portConfig} />
+      <ACL ports={portConfig === 'default' ? generateDefaultPortConfig() : portConfig} portSequence={true} />
     </div>
   )
 }
