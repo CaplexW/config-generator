@@ -23,9 +23,9 @@ const ACL = {
       ${rule.priority ? `priority ${rule.priority}` : ''}
     `;
   },
-  createRuleFromList: (list: MAC[] | IP[], rule: ACLRuleConfig, numberOfRules: number, portSequence: boolean = false): RuleBlock => {
+  createRuleFromList: (list: MAC[] | IP[], rule: ACLRuleConfig, portSequence: boolean = false): RuleBlock => {
     const { portRange } = rule;
-    // let numberOfRules = rule.ruleId;
+    let numberOfRules = rule.ruleId;
     if (portRange === undefined) throw 'portRange property is not defined in createRuleFromList argument. This property could not be undefined in this function argument.';
 
     if (portSequence) {

@@ -1,7 +1,6 @@
-import commonData, { type IP, type MAC, type PortsInfo } from "../data/commonData";
-import ACL, { type ACLRuleConfig } from "./acl";
-import createPortRanges from "./createPortRanges";
-import createRule, { type RuleConfig } from "./createRule";
+import commonData, { type EthernetTypes, type IP, type MAC, type PortRange, type PortsInfo, type ValueOf } from "../data/commonData";
+import ACL from "./acl";
+import type { NetworkProtocol } from "./createRule";
 
 function createMacRules(ports: PortsInfo, profileId: number, portSequence: boolean = false): ConfigBlock {
   const { broadcastMac, nodesMacList, etherTypes } = commonData;
@@ -21,29 +20,26 @@ function createMacRules(ports: PortsInfo, profileId: number, portSequence: boole
     portSequence,
   };
 
-  function configureRules(
+  const configureRules = (
     list: MAC[] | IP[],
-    config: ACLRuleConfig,
-    increment = list.length
-  ) {
+    config: ACLRuleSubConfig,
+  ) => {
     const rules = ACL.createRuleFromList(list, { ...config, ruleId: numberOfRules });
-    numberOfRules += increment;
+    numberOfRules += rules.length;
+
     return rules;
   };
-  
 
-  const commonIncomeMac = ACL.createRuleFromList(nodesMacList, {
-    profileId,
+  const commonIncomeMac = configureRules(nodesMacList, {
+    ...baseRuleConfig,
     action: 'deny',
     portRange: ports.common,
     ruleTarget: {
       direction: 'source',
     },
-  }, numberOfRules);
-  numberOfRules += commonIncomeMac.length;
-
-  const fullOutBroadcastMac = ACL.createRuleFromList([broadcastMac], {
-    profileId,
+  });
+  const fullOutBroadcastMac = configureRules([broadcastMac], {
+    ...baseRuleConfig,
     action: 'permit',
     portRange: ports.full,
     ehterType: [etherTypes.pppoeDiscovery],
@@ -51,11 +47,9 @@ function createMacRules(ports: PortsInfo, profileId: number, portSequence: boole
     ruleTarget: {
       direction: 'destination',
     },
-  }, numberOfRules);
-  numberOfRules += 1;
-
-  const fullOutMacRules = ACL.createRuleFromList(nodesMacList, {
-    profileId,
+  });
+  const fullOutMacRules = configureRules(nodesMacList, {
+    ...baseRuleConfig,
     action: 'permit',
     portRange: ports.full,
     ehterType: [etherTypes.pppoeDiscovery, etherTypes.pppoeSession],
@@ -63,11 +57,9 @@ function createMacRules(ports: PortsInfo, profileId: number, portSequence: boole
     ruleTarget: {
       direction: 'destination',
     },
-  }, numberOfRules);
-  numberOfRules += fullOutMacRules.length;
-
-  const specialIncomeMac = ACL.createRuleFromList(nodesMacList, {
-    profileId,
+  });
+  const specialIncomeMac = configureRules(nodesMacList, {
+    ...baseRuleConfig,
     action: 'permit',
     portRange: ports.special,
     ehterType: [etherTypes.pppoeDiscovery, etherTypes.pppoeSession],
@@ -75,19 +67,16 @@ function createMacRules(ports: PortsInfo, profileId: number, portSequence: boole
     ruleTarget: {
       direction: 'source',
     }
-  }, numberOfRules);
-  numberOfRules += specialIncomeMac.length;
-
+  });
   const commonArpRules = [ACL.createRule({
-    profileId,
-    ruleId: numberOfRules,
+    ...baseRuleConfig,
+    ruleId: numberOfRules + 1,
     portRange: ports.common,
     protocol: 'ethernet',
     ehterType: etherTypes.arp,
     action: 'permit',
     priority: 1,
   })];
-  numberOfRules += commonArpRules.length;
 
   const macRules = {
     header: accessProfile,
@@ -109,6 +98,19 @@ export type ConfigBlock = {
   header: string,
   blocks: RuleBlock[],
 }
-
 export type RuleBlock = string[];
-
+export type ACLRuleSubConfig = {
+  profileId: number,
+  portSequence: boolean,
+  action: 'permit' | 'deny',
+  portRange: PortRange,
+  ruleId?: number;
+  protocol?: NetworkProtocol;
+  priority?: number,
+  ehterType?: ValueOf<EthernetTypes> | ValueOf<EthernetTypes>[];
+  ruleTarget?: {
+    value?: IP | MAC;
+    direction: 'source' | 'destination';
+    subProtocol?: 'tcp' | 'udp';
+  };
+};
