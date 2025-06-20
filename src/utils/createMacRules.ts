@@ -2,7 +2,7 @@ import commonData, { type EthernetTypes, type IP, type MAC, type PortRange, type
 import ACL from "./acl";
 import type { NetworkProtocol } from "./createRule";
 
-function createMacRules(ports: PortsInfo, profileId: number, portSequence: boolean = false): ConfigBlock {
+function createMacRules(ports: PortsInfo, profileId: number, portSequence: boolean = false, isReplacing:boolean = false): ConfigBlock {
   const { broadcastMac, nodesMacList, etherTypes } = commonData;
 
   let numberOfRules = 0;
